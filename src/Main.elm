@@ -5,6 +5,7 @@ import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
+import Json.Decode as Decode
 import Url
 import Url.Parser as Parser
 
@@ -53,6 +54,7 @@ init flags url key =
 type Msg
     = UrlChanged Url.Url
     | LinkClicked Browser.UrlRequest
+    | GotArticles (Result Http.Error (List Article))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -68,6 +70,14 @@ update msg model =
 
                 Browser.External urlStr ->
                     ( model, Nav.load urlStr )
+
+        GotArticles result ->
+            case result of
+                Ok articles ->
+                    ( { model | articles = articles }, Cmd.none )
+
+                Err err ->
+                    ( model, Cmd.none )
 
 
 
