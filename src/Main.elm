@@ -16,7 +16,7 @@ import Url.Parser as Parser
 type alias Model =
     { key : Nav.Key
     , currentRoute : Route
-    , activities : List Activity
+    , articles : List Article
     }
 
 
@@ -25,10 +25,10 @@ type Route
     | NotFound
 
 
-type alias Activity =
-    { title : String
-    , media : String
-    , url : String
+type alias Article =
+    { id : Int
+    , title : String
+    , body : String
     }
 
 
@@ -40,9 +40,9 @@ init flags url key =
     in
     ( { key = key
       , currentRoute = parse url
-      , activities = []
+      , articles = []
       }
-    , Cmd.none
+    , getArticles
     )
 
 
@@ -111,40 +111,32 @@ viewNotFound =
     }
 
 
-type alias Data =
-    { title : String
-    , body : String
-    }
-
-
-viewDataList : List Data -> Html Msg
-viewDataList dataList =
-    let
-        transform : Data -> List (Html Msg)
-        transform data =
-            [ dt [] [ text data.title ]
-            , dd [] [ text data.body ]
-            ]
-    in
-    dl [] <| List.concatMap transform dataList
-
-
-viewActivityList : List Activity -> Html Msg
-viewActivityList list =
-    let
-        transform : Activity -> Html Msg
-        transform activity =
-            li [] [ a [ href activity.url ] [ text <| activity.title ++ "(" ++ activity.media ++ ")" ] ]
-    in
-    if List.length list == 0 then
-        p [] [ text "No content..." ]
-
-    else
-        ul [] <| List.map transform list
-
-
 
 ---- HTTP ----
+
+
+articleDecoder : Decode.Decoder Article
+articleDecoder =
+    Decode.map3 Article
+        (Decode.field "id" Decode.int)
+        (Decode.field "title" Decode.string)
+        (Decode.field "body" Decode.string)
+
+
+articlesDecoder : Decode.Decoder (List Article)
+articlesDecoder =
+    Decode.list articleDecoder
+
+
+getArticles : Cmd Msg
+getArticles =
+    Http.get
+        { url = "http://localhost:8080/posts"
+        , expect = Http.expectJson GotArticles articlesDecoder
+        }
+
+
+
 ---- PROGRAM ----
 
 
