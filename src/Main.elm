@@ -7,7 +7,7 @@ import Html.Attributes exposing (..)
 import Http
 import Json.Decode as Decode
 import Url
-import Url.Parser as Parser
+import Url.Parser as Parser exposing ((</>))
 
 
 
@@ -23,6 +23,7 @@ type alias Model =
 
 type Route
     = Top
+    | Post Int
     | NotFound
 
 
@@ -61,7 +62,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UrlChanged url ->
-            ( model, Cmd.none )
+            ( { model | currentRoute = parse url }, Cmd.none )
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -87,7 +88,9 @@ update msg model =
 parser : Parser.Parser (Route -> a) a
 parser =
     Parser.oneOf
-        [ Parser.map Top <| Parser.top ]
+        [ Parser.map Top <| Parser.top
+        , Parser.map Post <| Parser.s "posts" </> Parser.int
+        ]
 
 
 parse : Url.Url -> Route
@@ -103,14 +106,52 @@ view : Model -> Browser.Document Msg
 view model =
     case model.currentRoute of
         Top ->
+            { title = "Elm sample blog"
+            , body =
+                [ h1 [] [ text "Elm sample blog" ]
+                , viewArticleList model.articles
+                ]
+            }
+
+        Post id ->
+            let
+                maybePost : Maybe Article
+                maybePost =
+                    List.filter (\a -> a.id == id) model.articles
+                        |> List.head
+            in
             { title = "title"
             , body =
-                [ p [] [ text "hello" ]
-                ]
+                [ h1 [] [ text "Elm sample blog" ] ]
+                    ++ (case maybePost of
+                            Just post ->
+                                [ h2 [] [ text post.title ]
+                                , p [] [ text post.body ]
+                                ]
+
+                            Nothing ->
+                                [ h2 [] [ text "Not found..." ]
+                                , p [] [ text "この記事は存在しません。" ]
+                                ]
+                       )
             }
 
         NotFound ->
             viewNotFound
+
+
+viewArticleList : List Article -> Html Msg
+viewArticleList articles =
+    let
+        viewArticle : Article -> Html Msg
+        viewArticle article =
+            div []
+                [ h2 [] [ a [ href <| "/posts/" ++ String.fromInt article.id ] [ text article.title ] ]
+                , hr [] []
+                , p [] [ text article.body ]
+                ]
+    in
+    div [] (List.map viewArticle articles)
 
 
 viewNotFound : Browser.Document Msg
