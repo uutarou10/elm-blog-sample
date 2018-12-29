@@ -7,7 +7,13 @@ import Json.Decode as Decode
 
 
 type alias Model =
-    { articles : List Article }
+    { articles : Articles }
+
+
+type Articles
+    = Loading
+    | Fail Http.Error
+    | Success (List Article)
 
 
 type alias Article =
@@ -19,7 +25,7 @@ type alias Article =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model [], getArticles )
+    ( Model Loading, getArticles )
 
 
 getArticles : Cmd Msg
@@ -52,10 +58,10 @@ update msg model =
         GotArticles response ->
             case response of
                 Ok articles ->
-                    ( { model | articles = articles }, Cmd.none )
+                    ( { model | articles = Success articles }, Cmd.none )
 
-                Err _ ->
-                    ( model, Cmd.none )
+                Err err ->
+                    ( { model | articles = Fail err }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -74,5 +80,15 @@ view model =
     in
     div []
         [ h1 [] [ text "Elm blog sample" ]
-        , div [] (viewArticles model.articles)
+        , div []
+            (case model.articles of
+                Loading ->
+                    [ p [] [ text "Loading..." ] ]
+
+                Fail _ ->
+                    [ p [] [ text "Error" ] ]
+
+                Success articles ->
+                    viewArticles articles
+            )
         ]
