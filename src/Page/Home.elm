@@ -1,5 +1,6 @@
 module Page.Home exposing (Model, Msg(..), init, update, view)
 
+import Article
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
@@ -7,20 +8,13 @@ import Json.Decode as Decode
 
 
 type alias Model =
-    { articles : Articles }
+    { articles : ArticlesStatus }
 
 
-type Articles
+type ArticlesStatus
     = Loading
     | Fail Http.Error
-    | Success (List Article)
-
-
-type alias Article =
-    { id : Int
-    , title : String
-    , body : String
-    }
+    | Success (List Article.Article)
 
 
 init : ( Model, Cmd Msg )
@@ -32,21 +26,13 @@ getArticles : Cmd Msg
 getArticles =
     Http.get
         { url = "http://localhost:8080/posts"
-        , expect = Http.expectJson GotArticles (Decode.list articleDecoder)
+        , expect = Http.expectJson GotArticles (Decode.list Article.decoder)
         }
-
-
-articleDecoder : Decode.Decoder Article
-articleDecoder =
-    Decode.map3 Article
-        (Decode.field "id" Decode.int)
-        (Decode.field "title" Decode.string)
-        (Decode.field "body" Decode.string)
 
 
 type Msg
     = NoOp
-    | GotArticles (Result Http.Error (List Article))
+    | GotArticles (Result Http.Error (List Article.Article))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -67,14 +53,14 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-        viewArticle : Article -> Html Msg
+        viewArticle : Article.Article -> Html Msg
         viewArticle article =
             div []
                 [ h2 [] [ a [ href <| "/articles/" ++ String.fromInt article.id ] [ text article.title ] ]
                 , p [] [ text <| String.left 100 article.body ++ "..." ]
                 ]
 
-        viewArticles : List Article -> List (Html Msg)
+        viewArticles : List Article.Article -> List (Html Msg)
         viewArticles articles =
             List.map viewArticle articles
     in

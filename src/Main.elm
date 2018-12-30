@@ -3,9 +3,10 @@ module Main exposing (main)
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
+import Page.Article as Article
 import Page.Home as Home
 import Url
-import Url.Parser as Parser
+import Url.Parser as Parser exposing ((</>))
 
 
 main =
@@ -36,6 +37,7 @@ type alias Model =
 type Page
     = NotFound
     | Home Home.Model
+    | Article Article.Model
 
 
 
@@ -47,6 +49,7 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | HomeMsg Home.Msg
+    | ArticleMsg Article.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -78,6 +81,14 @@ update message model =
                 _ ->
                     ( model, Cmd.none )
 
+        ArticleMsg msg ->
+            case model.page of
+                Article article ->
+                    stepArticle model (Article.update msg article)
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 stepHome : Model -> ( Home.Model, Cmd Home.Msg ) -> ( Model, Cmd Msg )
 stepHome model ( homeModel, homeMsg ) =
@@ -86,12 +97,21 @@ stepHome model ( homeModel, homeMsg ) =
     )
 
 
+stepArticle : Model -> ( Article.Model, Cmd Article.Msg ) -> ( Model, Cmd Msg )
+stepArticle model ( articleModel, articleMsg ) =
+    ( { model | page = Article articleModel }
+    , Cmd.map ArticleMsg articleMsg
+    )
+
+
 stepUrl : Url.Url -> Model -> ( Model, Cmd Msg )
 stepUrl url model =
     let
         parser =
             Parser.oneOf
-                [ Parser.map (stepHome model Home.init) Parser.top ]
+                [ Parser.map (stepHome model Home.init) Parser.top
+                , Parser.map (\articleId -> stepArticle model (Article.init articleId)) (Parser.s "articles" </> Parser.string)
+                ]
     in
     case Parser.parse parser url of
         Just ans ->
@@ -123,6 +143,11 @@ view model =
             }
 
         Home home ->
-            { title = "Home"
+            { title = "Home | Elm blog sample"
             , body = [ Html.map HomeMsg (Home.view home) ]
+            }
+
+        Article article ->
+            { title = "Article | Elm blog sample"
+            , body = [ Html.map ArticleMsg (Article.view article) ]
             }
