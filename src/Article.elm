@@ -1,4 +1,4 @@
-module Article exposing (Article, decoder)
+module Article exposing (Article, Date, dateDecoder, dateToString, decoder, monthToString)
 
 import ISO8601
 import Json.Decode as Decode
@@ -17,6 +17,55 @@ type alias Date =
     { zone : Time.Zone
     , time : Time.Posix
     }
+
+
+dateToString : Date -> String
+dateToString date =
+    (Time.toMonth date.zone date.time |> monthToString)
+        ++ " "
+        ++ (Time.toDay date.zone date.time |> String.fromInt)
+        ++ ", "
+        ++ (Time.toYear date.zone date.time |> String.fromInt)
+
+
+monthToString : Time.Month -> String
+monthToString month =
+    case month of
+        Time.Jan ->
+            "January"
+
+        Time.Feb ->
+            "February"
+
+        Time.Mar ->
+            "March"
+
+        Time.Apr ->
+            "April"
+
+        Time.May ->
+            "May"
+
+        Time.Jun ->
+            "June"
+
+        Time.Jul ->
+            "July"
+
+        Time.Aug ->
+            "August"
+
+        Time.Sep ->
+            "September"
+
+        Time.Oct ->
+            "Octorber"
+
+        Time.Nov ->
+            "November"
+
+        Time.Dec ->
+            "December"
 
 
 decoder : Decode.Decoder Article

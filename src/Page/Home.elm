@@ -57,6 +57,7 @@ view model =
         viewArticle article =
             div []
                 [ h2 [] [ a [ href <| "/articles/" ++ String.fromInt article.id ] [ text article.title ] ]
+                , small [] [ text <| Article.dateToString article.createdAt ]
                 , p [] [ text <| String.left 100 article.body ++ "..." ]
                 ]
 
