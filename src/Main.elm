@@ -148,6 +148,15 @@ view model =
             }
 
         Article article ->
-            { title = "Article | Elm blog sample"
+            let
+                title =
+                    case article.article of
+                        Article.Success a ->
+                            a.title
+
+                        _ ->
+                            "Article"
+            in
+            { title = title ++ " | Elm blog sample"
             , body = [ Html.map ArticleMsg (Article.view article) ]
             }
